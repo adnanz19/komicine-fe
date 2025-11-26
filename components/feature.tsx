@@ -16,66 +16,50 @@ interface Feature {
 }
 
 interface FeatureProps {
-  title?: string;
+  heading?: string;
+  description?: string;
   features?: Feature[];
   buttonText?: string;
   buttonUrl?: string;
 }
 
 const FeatureSection = ({
-  title = "Fully featured components for Shadcn UI & Tailwind",
+  heading = "Fitur Unggulan Komicine",
+  description = "Komicine hadir dengan berbagai fitur canggih yang dirancang khusus untuk para penggemar cerita visual. Nikmati pengalaman terbaik dalam melacak, menemukan, dan berbagi konten favoritmu.",
   features = [
     {
-      heading: "Quality",
+      heading: "Database Terlengkap",
       description:
-        "Built with attention to detail and best practices. Every component is thoroughly tested and follows modern React patterns for reliability and performance.",
-      icon: <GitPullRequest className="size-6" />,
+        "Cari apa saja, pasti ketemu. Dari Anime klasik, Manga terbaru, Manhwa hits, hingga Film Box Office dalam satu database terintegrasi.",
+      icon: <Layers className="size-6" />, // Cocok melambangkan tumpukan data
     },
     {
-      heading: "Experience",
+      heading: "Tracking Mudah",
       description:
-        "Crafted with user experience in mind. Each component is designed to be intuitive, accessible, and provide smooth interactions across all devices.",
-      icon: <SquareKanban className="size-6" />,
+        "Lupa sampai episode atau chapter berapa? Catat progress tontonan dan bacaanmu dengan satu klik. Tidak ada lagi cerita lupa alur.",
+      icon: <SquareKanban className="size-6" />, // Melambangkan manajemen status/list
     },
     {
-      heading: "Support",
+      heading: "Ringan & Cepat",
       description:
-        "Comprehensive documentation and community support. Get help when you need it with detailed guides, examples, and active community assistance.",
-      icon: <RadioTower className="size-6" />,
-    },
-    {
-      heading: "Innovation",
-      description:
-        "Cutting-edge design patterns and modern web technologies. Stay ahead with the latest trends in UI/UX design and development practices.",
-      icon: <WandSparkles className="size-6" />,
-    },
-    {
-      heading: "Results",
-      description:
-        "Proven track record of successful implementations. These components have been battle-tested in real-world applications and deliver consistent results.",
-      icon: <Layers className="size-6" />,
-    },
-    {
-      heading: "Efficiency",
-      description:
-        "Optimized for performance and developer productivity. Lightweight, fast-loading components that help you build faster without compromising on quality.",
-      icon: <BatteryCharging className="size-6" />,
+        "Dibangun dengan teknologi modern (Next.js) yang super cepat. Hemat kuota dan lancar diakses dari HP maupun Laptop.",
+      icon: <BatteryCharging className="size-6" />, // Melambangkan efisiensi energi/kecepatan
     },
   ],
-  buttonText = "More Features",
-  buttonUrl = "https://shadcnblocks.com",
+  // ... sisa kode props lain
 }: FeatureProps) => {
   return (
     <section className="py-20 px-10">
       <div className="w-full max-w-7xl mx-auto">
-        {title && (
-          <div className="mx-auto mb-16 max-w-3xl text-center">
-            <h2 className="text-pretty text-4xl font-medium lg:text-5xl">
-              {title}
-            </h2>
-          </div>
-        )}
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="w-full max-w-7xl mx-auto flex flex-col items-center text-center">
+        <h2 className="my-6 text-pretty text-2xl font-bold lg:text-4xl">
+          {heading}
+        </h2>
+        <p className="text-muted-foreground mb-8 max-w-3xl lg:text-xl">
+          {description}
+        </p>
+      </div>
+        <div className="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, i) => (
             <div key={i} className="flex flex-col">
               <div className="bg-accent mb-5 flex size-16 items-center justify-center rounded-full">
