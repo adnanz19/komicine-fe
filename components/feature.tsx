@@ -61,7 +61,7 @@ const FeatureSection = ({
       </div>
         <div className="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, i) => (
-            <div key={i} className="flex flex-col">
+            <div key={i} className="flex flex-col justify-center items-center text-center px-4">
               <div className="bg-accent mb-5 flex size-16 items-center justify-center rounded-full">
                 {feature.icon}
               </div>

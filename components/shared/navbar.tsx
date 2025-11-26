@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -18,6 +19,7 @@ import { Button } from "../ui/button";
 import Image from "next/image";
 
 export const Navbar = () => {
+  const pathname = usePathname();
   return (
     <nav className="px-10 z-50 sticky top-0 bg-background py-3 flex flex-row border-b justify-between">
       <Image src="/KomiCine.svg" alt="" width={100} height={100} />
@@ -27,7 +29,7 @@ export const Navbar = () => {
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={navigationMenuTriggerStyle()}
+              className={`${navigationMenuTriggerStyle()} ${pathname === "/" ? "text-primary" : ""}`}
             >
               <Link href="/">Home</Link>
             </NavigationMenuLink>
@@ -37,27 +39,25 @@ export const Navbar = () => {
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={navigationMenuTriggerStyle()}
+              className={`${navigationMenuTriggerStyle()} ${pathname === "/manga" ? "text-primary" : ""}`}
             >
               <Link href="/manga">Manga</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
-
           {/* Anime */}
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={navigationMenuTriggerStyle()}
+              className={`${navigationMenuTriggerStyle()} ${pathname === "/anime" ? "text-primary" : ""}`}
             >
               <Link href="/anime">Anime</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
-
           {/* Movies */}
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={navigationMenuTriggerStyle()}
+              className={`${navigationMenuTriggerStyle()} ${pathname === "/movies" ? "text-primary" : ""}`}
             >
               <Link href="/movies">Movies</Link>
             </NavigationMenuLink>
@@ -66,9 +66,9 @@ export const Navbar = () => {
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={navigationMenuTriggerStyle()}
+              className={`${navigationMenuTriggerStyle()} ${pathname === "/favorite" ? "text-primary" : ""}`}
             >
-              <Link href="/movies">Favorite</Link>
+              <Link href="/favorite">Favorite</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
