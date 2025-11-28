@@ -39,7 +39,7 @@ export const Navbar = () => {
               asChild
               className={navigationMenuTriggerStyle()}
             >
-              <Link href="/manga">Manga</Link>
+              <Link href="/mangas">Manga</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
 
