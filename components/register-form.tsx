@@ -74,7 +74,7 @@ export function RegisterForm({
       console.log("User registered & profile updated:", userCredential.user);
 
       // Langkah C: Redirect ke dashboard atau login
-      router.push("/login");
+      router.push("/mangas");
 
     } catch (error: any) {
       console.error("Error Registration:", error.code);
