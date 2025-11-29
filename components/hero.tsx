@@ -40,7 +40,7 @@ const HeroSection = ({
 
   },
   image = {
-    src: "/illust.svg",
+    src: "/img-landing.svg",
     alt: "Hero section demo image showing interface components",
   },
 }: HeroProps) => {
@@ -54,7 +54,7 @@ const HeroSection = ({
                 {badge}
               </Badge>
             )}
-            <h1 className="my-6 text-pretty text-4xl font-bold lg:text-6xl">
+            <h1 className="my-6 text-pretty text-4xl font-bold lg:text-6xl text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
               {heading}
             </h1>
             <p className="text-muted-foreground mb-8 max-w-xl lg:text-xl">
@@ -76,7 +76,7 @@ const HeroSection = ({
               )}
             </div>
           </div>
-          <Image src={image.src} alt={image.alt} width={1000} height={1000}/>
+          <Image src={image.src} alt={image.alt} width={500} height={500}/>
         </div>
       </div>
     </section>

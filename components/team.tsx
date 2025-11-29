@@ -15,8 +15,8 @@ interface TeamProps {
 }
 
 const TeamSection = ({
-  heading = "Team",
-  description = "Our diverse team of experts brings together decades of experience in design, engineering, and product development.",
+  heading = "Tim Pengembang",
+  description = "Kami adalah tim kecil yang bersemangat di balik Komicine. Dengan keahlian di bidang pengembangan web, kami berdedikasi untuk menciptakan platform terbaik bagi para penggemar cerita visual.",
   members = [
     {
       id: "member-1",

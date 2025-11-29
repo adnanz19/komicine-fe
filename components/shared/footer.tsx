@@ -70,7 +70,7 @@ const FooterSection = ({
       ],
     },
   ],
-  copyright = "© 2025 ScreenScroll. Dibuat dengan ❤️ oleh Bima Adnandita dan Pandu Nugraha Saputra.",
+  copyright = "© 2025 KomiCine. Dibuat oleh Bima Adnandita dan Pandu Nugraha Saputra.",
   bottomLinks = [
     { text: "Syarat & Ketentuan", url: "/terms" },
     { text: "Kebijakan Privasi", url: "/privacy" },
