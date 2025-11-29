@@ -26,7 +26,7 @@ interface HeroProps {
 
 const HeroSection = ({
   badge = "🎬 Teman Nonton & Baca Kamu",
-  heading = "Dunia Cerita Visual dalam Satu Genggaman.",
+  heading = "Dunia Cerita Visual dalam Satu Genggaman",
   description = "Dari anime musiman, manhwa aksi, sampai film box office. Simpan semua judul yang kamu suka dan catat sejauh mana kamu menikmatinya, tanpa ribet.",
   buttons = {
     primary: {
@@ -54,7 +54,7 @@ const HeroSection = ({
                 {badge}
               </Badge>
             )}
-            <h1 className="my-6 text-pretty text-4xl font-bold lg:text-6xl text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
+            <h1 className="py-6 text-pretty text-4xl font-bold lg:text-6xl text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
               {heading}
             </h1>
             <p className="text-muted-foreground mb-8 max-w-xl lg:text-xl">

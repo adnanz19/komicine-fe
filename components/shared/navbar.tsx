@@ -49,7 +49,7 @@ export const Navbar = () => {
     router.push("/");
   };
   return (
-    <nav className="px-10 z-50 sticky top-0 bg-background py-3 flex flex-row border-b justify-between">
+    <nav className="px-10 z-100 sticky top-0 bg-background py-3 flex flex-row border-b justify-between">
       <Image src="/KomiCine.svg" alt="" width={100} height={100} />
       <NavigationMenu>
         <NavigationMenuList className="flex-wrap">
@@ -70,7 +70,7 @@ export const Navbar = () => {
             <NavigationMenuLink
               asChild
               className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/manga" ? "text-primary" : ""
+                pathname === "/mangas" ? "text-primary" : ""
               }`}
             >
               <Link href="/mangas">Manga</Link>
@@ -81,10 +81,10 @@ export const Navbar = () => {
             <NavigationMenuLink
               asChild
               className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/anime" ? "text-primary" : ""
+                pathname === "/animes" ? "text-primary" : ""
               }`}
             >
-              <Link href="/anime">Anime</Link>
+              <Link href="/animes">Anime</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
           {/* Movies */}
@@ -103,10 +103,10 @@ export const Navbar = () => {
             <NavigationMenuLink
               asChild
               className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/favorite" ? "text-primary" : ""
+                pathname === "/favorites" ? "text-primary" : ""
               }`}
             >
-              <Link href="/favorite">Favorite</Link>
+              <Link href="/favorites">Favorite</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
