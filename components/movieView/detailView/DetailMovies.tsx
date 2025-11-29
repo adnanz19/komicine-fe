@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -23,6 +23,11 @@ import { MovieDetail } from "@/types/movie";
 import Image from "next/image";
 import Link from "next/link";
 
+// --- IMPORT FIREBASE ---
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+
 // TMDB API Configuration
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || "";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -32,9 +37,6 @@ const TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/original";
 const fetchMovieDetail = async (movieId: string): Promise<MovieDetail> => {
   try {
     const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits,similar`;
-
-    // console.log("Fetching movie detail from TMDB:", movieId);
-
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -42,9 +44,6 @@ const fetchMovieDetail = async (movieId: string): Promise<MovieDetail> => {
     }
 
     const data = await response.json();
-
-    // console.log(" Movie detail fetched successfully:", data);
-
     return data;
   } catch (error) {
     console.error("❌ Error fetching movie detail:", error);
@@ -55,8 +54,11 @@ const fetchMovieDetail = async (movieId: string): Promise<MovieDetail> => {
 const DetailMovies: React.FC = () => {
   const params = useParams();
   const router = useRouter();
-
   const movieId = params.id as string;
+
+  // --- STATE FIREBASE ---
+  const [user, setUser] = useState<User | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // TanStack Query untuk fetch movie detail
   const {
@@ -71,6 +73,71 @@ const DetailMovies: React.FC = () => {
     staleTime: 1000 * 60 * 15, // 15 menit
     gcTime: 1000 * 60 * 30, // 30 menit
   });
+
+  // --- LOGIKA FIREBASE 1: Cek User Login ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // --- LOGIKA FIREBASE 2: Cek Status Favorite Realtime ---
+  useEffect(() => {
+    if (!user || !movieId) {
+      setIsFavorite(false);
+      return;
+    }
+
+    // Path: users/{uid}/favorites/{movieId}
+    const docRef = doc(db, "users", user.uid, "favorites", movieId);
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      setIsFavorite(docSnap.exists());
+    });
+
+    return () => unsubscribe();
+  }, [user, movieId]);
+
+  // --- LOGIKA FIREBASE 3: Toggle Favorite ---
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!movie) return;
+
+    const docRef = doc(db, "users", user.uid, "favorites", movieId);
+
+    try {
+      if (isFavorite) {
+        // Hapus dari favorit
+        await deleteDoc(docRef);
+      } else {
+        // Simpan ke favorit
+        const fullImageUrl = movie.poster_path
+          ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}`
+          : null;
+
+        await setDoc(docRef, {
+          // Mapping Data agar sesuai struktur FavoritesPage
+          mal_id: movie.id, // Kita pakai ID film sebagai mal_id
+          title: movie.title,
+          image_url: fullImageUrl,
+          score: movie.vote_average || 0,
+          status: movie.status || "Released",
+          
+          // Data Spesifik Movie
+          type: "Movie", // PENTING: Penanda tipe untuk filter
+          release_date: movie.release_date,
+          
+          added_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Gagal update favorite movie:", err);
+    }
+  };
 
   // Format helpers
   const formatDate = (dateString: string) => {
@@ -102,7 +169,6 @@ const DetailMovies: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Loading skeleton */}
         <div className="relative h-[70vh] bg-linear-to-b from-muted/50 to-background animate-pulse">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
@@ -142,8 +208,8 @@ const DetailMovies: React.FC = () => {
         {movie.backdrop_path && (
           <div className="absolute inset-0">
             <Image
-            width={1200}
-            height={700}
+              width={1200}
+              height={700}
               src={`${TMDB_BACKDROP_BASE_URL}${movie.backdrop_path}`}
               alt={movie.title}
               className="w-full h-full object-cover"
@@ -173,8 +239,8 @@ const DetailMovies: React.FC = () => {
               {/* Poster */}
               <div className="hidden md:block">
                 <Image
-                    width={300}
-                    height={450}
+                  width={300}
+                  height={450}
                   src={
                     movie.poster_path
                       ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}`
@@ -262,24 +328,39 @@ const DetailMovies: React.FC = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3 pt-4">
+                  {/* --- TOMBOL FAVORITE DINAMIS --- */}
                   <Button
                     size="lg"
                     variant="outline"
-                    className="bg-white/10 border-white/30 text-white hover:bg-white/20 cursor-pointer"
+                    onClick={handleToggleFavorite}
+                    className={`cursor-pointer transition-all duration-300 ${
+                      isFavorite
+                        ? "bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                        : "bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    }`}
                   >
-                    <Heart className="w-5 h-5 mr-2" />
-                    Favorite
+                    <Heart
+                      className={`w-5 h-5 mr-2 ${
+                        isFavorite ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    {isFavorite ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                   </Button>
-                  <Link href={`https://www.themoviedb.org/movie/${movie.id}`} target="_blank" rel="noopener noreferrer">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="bg-white/10 border-white/30 text-white hover:bg-white/20 cursor-pointer"
+
+                  <Link
+                    href={`https://www.themoviedb.org/movie/${movie.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="bg-white/10 border-white/30 text-white hover:bg-white/20 cursor-pointer"
                     >
-                    <Info className="w-5 h-5 mr-2" />
-                    More Info
-                  </Button>
-                      </Link>
+                      <Info className="w-5 h-5 mr-2" />
+                      More Info
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -287,7 +368,7 @@ const DetailMovies: React.FC = () => {
         </div>
       </div>
 
-      {/* Detail Content */}
+      {/* Detail Content (Tidak berubah) */}
       <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8">
         {/* Overview */}
         <Card>
@@ -301,7 +382,6 @@ const DetailMovies: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Budget */}
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -318,7 +398,6 @@ const DetailMovies: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Revenue */}
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -335,7 +414,6 @@ const DetailMovies: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Popularity */}
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -344,13 +422,14 @@ const DetailMovies: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Popularity</p>
-                  <p className="font-semibold">{movie.popularity.toFixed(1)}</p>
+                  <p className="font-semibold">
+                    {movie.popularity.toFixed(1)}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Status */}
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -366,28 +445,27 @@ const DetailMovies: React.FC = () => {
           </Card>
         </div>
 
-        {/* Additional Details */}
+        {/* Additional Details (Production, Languages, etc.) */}
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Production Info */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="text-xl font-bold">Production</h3>
-
               {movie.production_companies.length > 0 && (
                 <div>
                   <h4 className="font-medium text-muted-foreground mb-2">
                     Companies
                   </h4>
                   <div className="space-y-1">
-                    {movie.production_companies.slice(0, 3).map((company) => (
-                      <p key={company.id} className="text-sm">
-                        {company.name}
-                      </p>
-                    ))}
+                    {movie.production_companies
+                      .slice(0, 3)
+                      .map((company) => (
+                        <p key={company.id} className="text-sm">
+                          {company.name}
+                        </p>
+                      ))}
                   </div>
                 </div>
               )}
-
               {movie.production_countries.length > 0 && (
                 <div>
                   <h4 className="font-medium text-muted-foreground mb-2">
@@ -409,18 +487,15 @@ const DetailMovies: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Language Info */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="text-xl font-bold">Languages</h3>
-
               <div>
                 <h4 className="font-medium text-muted-foreground mb-2">
                   Original Language
                 </h4>
                 <p className="text-sm uppercase">{movie.original_language}</p>
               </div>
-
               {movie.spoken_languages.length > 0 && (
                 <div>
                   <h4 className="font-medium text-muted-foreground mb-2">
@@ -439,7 +514,6 @@ const DetailMovies: React.FC = () => {
                   </div>
                 </div>
               )}
-
               {movie.homepage && (
                 <div>
                   <h4 className="font-medium text-muted-foreground mb-2">
