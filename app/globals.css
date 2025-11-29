@@ -41,14 +41,23 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-beam-move: beam-move 8s linear infinite;
+  @keyframes beam-move {
+  0% {
+    transform: translateX(0);
+    }
+  100% {
+    transform: translateX(100vw);
+    }
+  }
 }
 
 :root {
   --radius: 0.625rem;
-  
+
   /* BACKGROUND: Deep Indigo #1A1A2E */
   --background: #1A1A2E;
-  
+
   /* TEKS UTAMA: Putih Muda #EAEAEA */
   --foreground: #EAEAEA;
 
@@ -82,7 +91,7 @@
   /* BORDER & INPUT: Dark Navy #0F3460 */
   --border: #0F3460;
   --input: #0F3460;
-  
+
   /* RING: Mengikuti Primary baru */
   --ring: #00ADB5;
 
@@ -112,32 +121,32 @@
   --card-foreground: #EAEAEA;
   --popover: #0F3460;
   --popover-foreground: #EAEAEA;
-  
+
   /* Update Primary & Ring di Dark mode juga */
   --primary: #00ADB5;
   --primary-foreground: #FFFFFF;
-  
+
   --secondary: #0F3460;
   --secondary-foreground: #EAEAEA;
   --muted: #0F3460;
   --muted-foreground: #A4A4A4;
   --accent: #0F3460;
   --accent-foreground: #EAEAEA;
-  
+
   /* Update Destructive */
   --destructive: #E94560;
   --destructive-foreground: #FFFFFF;
-  
+
   --border: #0F3460;
   --input: #0F3460;
   --ring: #00ADB5;
-  
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  
+
   --sidebar: #0F3460;
   --sidebar-foreground: #EAEAEA;
   --sidebar-primary: #00ADB5;

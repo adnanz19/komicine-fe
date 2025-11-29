@@ -3,36 +3,21 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Card } from "../ui/card";
-import { Heart, BookOpen, CheckCircle, Clock, Star } from "lucide-react";
+import { Card } from "../../ui/card";
+import { Heart, BookOpen, CheckCircle, Clock, Star, Users } from "lucide-react";
 import Image from "next/image";
-
-interface MangaData {
-  mal_id: number;
-  title: string;
-  images: {
-    jpg: {
-      image_url: string;
-    };
-  };
-  chapters: number | null;
-  status: string;
-  score: number;
-}
-
-interface ListMangasProps {
-    searchQuery: string;
-}
+import Link from "next/link";
+import { MangaData, ListMangasProps } from "@/types/manga";
 
 const fetchMangas = async (query: string): Promise<MangaData[]> => {
   const apiUrl = process.env.NEXT_PUBLIC_JIKAN_API_URL;
 
-  let endpoint = `${apiUrl}/manga?limit=15`;
+  let endpoint = `${apiUrl}/manga?limit=20`;
 
   if (query) {
-      endpoint += `&q=${query}`; 
+    endpoint += `&q=${query}`;
   } else {
-      endpoint += `&order_by=popularity`;
+    endpoint += `&order_by=popularity`;
   }
 
   const response = await axios.get(endpoint);
@@ -47,7 +32,7 @@ const ListMangas = ({ searchQuery }: ListMangasProps) => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["mangas",searchQuery],
+    queryKey: ["mangas", searchQuery],
     queryFn: () => fetchMangas(searchQuery),
   });
 
@@ -113,26 +98,35 @@ const ListMangas = ({ searchQuery }: ListMangasProps) => {
   return (
     <div className="p-6 md:p-10 my-10 max-w-7xl mx-auto">
       <h2 className="text-3xl font-extrabold mb-10 text-center text-white tracking-tight">
-        {searchQuery ? `Hasil Pencarian untuk "${searchQuery}"` : "Daftar Manga Populer"}
+        {searchQuery
+          ? `Hasil Pencarian untuk "${searchQuery}"`
+          : "Daftar Manga Populer"}
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {mangas?.map((manga) => (
           <Card
             key={manga.mal_id}
-            className="group relative flex flex-col bg-slate-900 rounded-xl border border-slate-800 shadow-md hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1 hover:border-slate-600 transition-all duration-300 overflow-hidden p-0"
+            className="group relative flex flex-col bg-slate-900 rounded-xl border border-slate-800 shadow-md hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1 hover:border-slate-600 transition-all duration-300 overflow-hidden p-0 "
           >
             <div className="relative w-full aspect-2/3 overflow-hidden bg-slate-800">
-              <Image
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
-                src={manga.images.jpg.image_url}
-                alt={manga.title}
-                className="object-cover transition-transform duration-500 group-hover:scale-110 opacity-90 group-hover:opacity-90"
-                loading="lazy" 
-              />
+              <Link href={`/mangas/detail/${manga.mal_id}`}>
+                <Image
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+                  src={manga.images.jpg.image_url}
+                  alt={manga.title}
+                  className="object-cover transition-transform duration-500 group-hover:scale-110 opacity-90 group-hover:opacity-90 cursor-pointer"
+                  loading="lazy"
+                />
+              </Link>
 
-              <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 to-transparent opacity-0 group-hover:opacity-100transition-opacity duration-300">
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  <span>{manga.members?.toLocaleString()}</span>
+                </div>
+              </div>
 
               <button
                 onClick={() => toggleFavorite(manga.mal_id)}
@@ -149,12 +143,14 @@ const ListMangas = ({ searchQuery }: ListMangasProps) => {
             </div>
 
             <div className="flex flex-col grow p-4 space-y-3">
-              <h3
-                className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-slate-100 group-hover:text-blue-400 transition-colors"
-                title={manga.title}
-              >
-                {manga.title}
-              </h3>
+              <Link href={`/mangas/detail/${manga.mal_id}`}>
+                <h3
+                  className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-slate-100 group-hover:text-blue-400 transition-colors"
+                  title={manga.title}
+                >
+                  {manga.title}
+                </h3>
+              </Link>
 
               <div className="flex flex-col gap-2 mt-auto pt-2 border-t border-slate-800/50">
                 <div className="flex justify-between items-center text-sm text-slate-400 font-medium">

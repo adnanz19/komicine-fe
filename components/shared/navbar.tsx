@@ -19,7 +19,7 @@ import Image from "next/image";
 
 export const Navbar = () => {
   return (
-    <nav className="px-10 sticky top-0 bg-background py-3 flex flex-row border-b justify-between">
+    <nav className="px-10 sticky top-0 bg-background py-3 flex flex-row border-b justify-between z-50">
       <Image src="/MyList.svg" alt="" width={100} height={100} />
       <NavigationMenu>
         <NavigationMenuList className="flex-wrap">
