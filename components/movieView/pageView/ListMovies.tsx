@@ -1,43 +1,39 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
-import { Loader2, Grid3X3, Star, Calendar,  EyeOff, BookOpen } from "lucide-react";
-import { Card,  } from "@/components/ui/card";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Loader2,
+  Grid3X3,
+  Star,
+  Calendar,
+  EyeOff,
+  BookOpen,
+  Heart,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
 import MoviePagination from "./MoviePagination";
 import { MovieData, MovieApiResponse, ListMoviesProps } from "@/types/movie";
 import { useSafeMode } from "@/hooks/useSafeMode";
 import Link from "next/link";
 import Image from "next/image";
 
+// Firebase imports
+import { auth, db } from "@/lib/firebase";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  collection,
+} from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+
 // TMDB API Configuration
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY || "";
 const TMDB_BASE_URL = process.env.NEXT_PUBLIC_TMDB_API_URL || "";
-const TMDB_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL || ""   ;
-
-// Genre mapping for TMDB
-const GENRE_MAP: Record<number, string> = {
-  28: "Action",
-  12: "Adventure",
-  16: "Animation",
-  35: "Comedy",
-  80: "Crime",
-  99: "Documentary",
-  18: "Drama",
-  10751: "Family",
-  14: "Fantasy",
-  36: "History",
-  27: "Horror",
-  10402: "Music",
-  9648: "Mystery",
-  10749: "Romance",
-  878: "Science Fiction",
-  10770: "TV Movie",
-  53: "Thriller",
-  10752: "War",
-  37: "Western",
-};
+const TMDB_IMAGE_BASE_URL = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL || "";
 
 const fetchMovies = async (
   searchQuery: string = "",
@@ -81,7 +77,6 @@ const fetchMovies = async (
       page: data.page || 1,
     };
 
-
     return transformedData;
   } catch (error) {
     console.error("❌ Error fetching movies:", error);
@@ -94,9 +89,14 @@ const ListMovies: React.FC<ListMoviesProps> = ({
   onPageChange,
 }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Gunakan custom hook untuk safe mode
   const { safeMode } = useSafeMode();
+
+  // Firebase state for favorites
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [user, setUser] = useState<User | null>(null);
 
   // Generate search key untuk TanStack Query
   const searchKey = useMemo(() => {
@@ -148,9 +148,66 @@ const ListMovies: React.FC<ListMoviesProps> = ({
       filtered = filtered.filter((movie) => !movie.adult);
     }
 
-
     return filtered;
   }, [movieResponse, safeMode]);
+
+  // Firebase effects
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      // Clear favorites when user changes (login/logout)
+      if (!currentUser) {
+        setFavorites(new Set());
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const favRef = collection(db, "users", user.uid, "favorites");
+    const unsubscribe = onSnapshot(favRef, (snapshot) => {
+      const favIds = new Set(snapshot.docs.map((doc) => parseInt(doc.id)));
+      setFavorites(favIds);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Toggle favorite function
+  const toggleFavorite = async (movie: MovieData) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const movieIdString = movie.id.toString();
+    const docRef = doc(db, "users", user.uid, "favorites", movieIdString);
+
+    try {
+      if (favorites.has(movie.id)) {
+        await deleteDoc(docRef);
+      } else {
+        await setDoc(docRef, {
+          mal_id: movie.id,
+          title: movie.title,
+          image_url: movie.poster_path
+            ? `${TMDB_IMAGE_BASE_URL}${movie.poster_path}`
+            : "/placeholder-poster.jpg",
+          score: movie.vote_average || 0,
+          status: movie.release_date ? "Released" : "TBA",
+          chapters: null,
+          type: "movie",
+          added_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Gagal update favorite:", err);
+    }
+  };
 
   // Handler untuk pagination
   const handlePageChange = useCallback(
@@ -163,9 +220,6 @@ const ListMovies: React.FC<ListMoviesProps> = ({
     },
     [effectivePage, onPageChange]
   );
-
-
-  
 
   // Format date
   const formatDate = useCallback((dateString: string) => {
@@ -238,12 +292,7 @@ const ListMovies: React.FC<ListMoviesProps> = ({
                 <span className="text-purple-400">{currentQuery}</span>&rdquo;
               </>
             ) : currentGenre ? (
-              <>
-                Genre:{" "}
-                <span className="text-purple-400">
-                  {GENRE_MAP[parseInt(currentGenre)] || `ID ${currentGenre}`}
-                </span>
-              </>
+              <>Genre: </>
             ) : (
               "Popular Movies"
             )}
@@ -293,11 +342,25 @@ const ListMovies: React.FC<ListMoviesProps> = ({
                   loading="lazy"
                 />
               </Link>
-              
-              {/* Tambahan: Bahasa (Pocok Kanan Atas Poster - Rapi & Kecil) */}
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-bold text-white border border-white/20 uppercase">
+
+              {/* Language Badge (Pojok Kiri Atas) */}
+              <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-bold text-white border border-white/20 uppercase">
                 {movie.original_language}
               </div>
+
+              {/* Heart Favorite Button (Pojok Kanan Atas) */}
+              <button
+                onClick={() => toggleFavorite(movie)}
+                className="absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none bg-black/20 hover:bg-black/40 backdrop-blur-sm"
+              >
+                <Heart
+                  className={`w-5 h-5 transition-colors cursor-pointer ${
+                    favorites.has(movie.id)
+                      ? "fill-red-500 text-red-500"
+                      : "text-slate-300 hover:text-red-400"
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Bagian Konten Judul */}
@@ -314,7 +377,6 @@ const ListMovies: React.FC<ListMoviesProps> = ({
 
             {/* Bagian Footer Card */}
             <div className="flex flex-col gap-3 mt-auto p-4 pt-0 border-t border-slate-800/50">
-              
               {/* Overview singkat (Baris 1) */}
               <div className="flex items-center gap-1.5 overflow-hidden pt-3 text-slate-400">
                 <BookOpen className="w-3.5 h-3.5 shrink-0" />
@@ -325,7 +387,6 @@ const ListMovies: React.FC<ListMoviesProps> = ({
 
               {/* Baris Bawah: Tanggal & Rating (Baris 2) */}
               <div className="flex justify-between items-center mt-1">
-                
                 {/* Release Date (Kiri) */}
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-slate-800 px-2 py-1 rounded-md border border-slate-700">
                   <Calendar className="w-3 h-3 text-purple-400" />
@@ -335,9 +396,10 @@ const ListMovies: React.FC<ListMoviesProps> = ({
                 {/* Rating Bintang (Kanan) */}
                 <div className="flex items-center gap-1 text-xs font-bold text-yellow-500">
                   <Star className="w-3.5 h-3.5 fill-yellow-500" />
-                  <span>{movie.vote_average ? movie.vote_average.toFixed(1) : "N/A"}</span>
+                  <span>
+                    {movie.vote_average ? movie.vote_average.toFixed(1) : "N/A"}
+                  </span>
                 </div>
-
               </div>
             </div>
           </Card>
