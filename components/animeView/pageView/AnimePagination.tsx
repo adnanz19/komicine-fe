@@ -9,7 +9,7 @@ import {
   PaginationEllipsis,
 } from "../../ui/pagination";
 
-interface MangaPaginationProps {
+interface AnimePaginationProps {
   pagination: {
     last_visible_page: number;
     has_next_page: boolean;
@@ -24,12 +24,12 @@ interface MangaPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const MangaPagination = ({
+const AnimePagination = ({
   pagination,
   currentPage,
   onPageChange,
-}: MangaPaginationProps) => {
-  console.log("MangaPagination props:", {
+}: AnimePaginationProps) => {
+  console.log("AnimePagination props:", {
     currentPage,
     totalPages: pagination.last_visible_page,
     hasNextPage: pagination.has_next_page,
@@ -146,4 +146,4 @@ const MangaPagination = ({
   );
 };
 
-export default MangaPagination;
+export default AnimePagination;
