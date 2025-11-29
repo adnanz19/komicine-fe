@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import axios from "axios";
@@ -20,6 +20,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ListMangasProps, MangaApiResponse } from "@/types/manga";
 
+// --- TAMBAHAN IMPORT FIREBASE ---
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, deleteDoc, onSnapshot, collection } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+
 const fetchMangas = async (
   query: string,
   genreId?: string,
@@ -30,13 +35,10 @@ const fetchMangas = async (
   let endpoint = `${apiUrl}/manga?limit=15&page=${page}`;
 
   if (genreId) {
-    // Search by genre ID
     endpoint += `&genres=${genreId}&order_by=popularity`;
   } else if (query) {
-    // Search by text query
     endpoint += `&q=${query}`;
   } else {
-    // Default popular manga
     endpoint += `&order_by=popularity`;
   }
 
@@ -45,7 +47,10 @@ const fetchMangas = async (
 };
 
 const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
+  // --- STATE FIREBASE ---
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [user, setUser] = useState<User | null>(null); // Cek user login
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,10 +63,8 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
   }, [searchQuery, genreId]);
 
   const effectiveCurrentPage = useMemo(() => {
-    // If it's a new search, always start from page 1
     const isNewSearch = searchKey !== `${searchQuery}-${genreId || "none"}`;
     if (isNewSearch && currentPage > 1) {
-      // Reset URL to page 1 when search changes
       const params = new URLSearchParams(searchParams.toString());
       params.delete("page");
       const newUrl = params.toString()
@@ -90,7 +93,7 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     queryKey: ["mangas", searchKey, safeMode, effectiveCurrentPage],
     queryFn: () =>
       fetchMangas(searchQuery, genreId || undefined, effectiveCurrentPage),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
     refetchOnWindowFocus: false,
     enabled: true,
   });
@@ -100,7 +103,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
   }, [apiResponse?.data]);
   const pagination = apiResponse?.pagination;
 
-  // Filter manga berdasarkan safe mode
   const mangas = useMemo(() => {
     if (!allMangas) return [];
 
@@ -109,7 +111,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
       return allMangas;
     }
 
-    // Jika safe mode aktif (true), filter out manga dengan genre Hentai
     const filtered = allMangas.filter((manga) => {
       if (manga.genres && Array.isArray(manga.genres)) {
         const hasAdultContent = manga.genres.some(
@@ -132,16 +133,62 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return filtered;
   }, [allMangas, safeMode]);
 
-  const toggleFavorite = (mangaId: number) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(mangaId)) {
-        newFavorites.delete(mangaId);
-      } else {
-        newFavorites.add(mangaId);
-      }
-      return newFavorites;
+  // --- LOGIKA BARU: CEK USER LOGIN ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
+    return () => unsubscribe();
+  }, []);
+
+  // --- LOGIKA BARU: SYNC FAVORITE DARI FIREBASE ---
+  useEffect(() => {
+    if (!user) {
+        setFavorites(new Set()); 
+        return; 
+    }
+
+    // Listener realtime ke database user yg login
+    const favRef = collection(db, "users", user.uid, "favorites");
+    const unsubscribe = onSnapshot(favRef, (snapshot) => {
+        // Ambil semua ID dokumen dan masukkan ke Set state
+        const favIds = new Set(snapshot.docs.map(doc => parseInt(doc.id)));
+        setFavorites(favIds);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // --- LOGIKA BARU: FUNGSI TOGGLE KE FIREBASE ---
+  const toggleFavorite = async (manga: any) => { // Terima full object
+    if (!user) {
+        // Kalau belum login, lempar ke halaman login
+        router.push("/login");
+        return;
+    }
+
+    const mangaIdString = manga.mal_id.toString();
+    const docRef = doc(db, "users", user.uid, "favorites", mangaIdString);
+
+    try {
+        if (favorites.has(manga.mal_id)) {
+            // Hapus dari DB
+            await deleteDoc(docRef);
+        } else {
+            // Simpan ke DB (Data lengkap biar bisa dipakai di page Favorite)
+            await setDoc(docRef, {
+                mal_id: manga.mal_id,
+                title: manga.title,
+                image_url: manga.images.jpg.image_url,
+                score: manga.score || 0,
+                status: manga.status,
+                chapters: manga.chapters,
+                added_at: new Date().toISOString()
+            });
+        }
+    } catch (err) {
+        console.error("Gagal update favorite:", err);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -155,7 +202,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     }
   };
 
-  // Get current search type for display
   const getSearchTitle = () => {
     if (genreId) {
       const genreMap: { [key: string]: string } = {
@@ -283,7 +329,8 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
               </div>
 
               <button
-                onClick={() => toggleFavorite(manga.mal_id)}
+                // UPDATE DI SINI: Passing full object manga
+                onClick={() => toggleFavorite(manga)}
                 className="absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none bg-black/20 hover:bg-black/40 backdrop-blur-sm"
               >
                 <Heart
