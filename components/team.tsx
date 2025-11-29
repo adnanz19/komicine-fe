@@ -15,20 +15,20 @@ interface TeamProps {
 }
 
 const TeamSection = ({
-  heading = "Team",
-  description = "Our diverse team of experts brings together decades of experience in design, engineering, and product development.",
+  heading = "Tim Pengembang",
+  description = "Kami adalah tim kecil yang bersemangat di balik Komicine. Dengan keahlian di bidang pengembangan web, kami berdedikasi untuk menciptakan platform terbaik bagi para penggemar cerita visual.",
   members = [
     {
       id: "member-1",
-      name: "Sarah Chen",
-      role: "CEO & Founder",
-      avatar: "",
+      name: "Pandu Nugaha Saputra",
+      role: "Frontend Developer",
+      avatar: "/foto-pandu.jpeg",
     },
     {
       id: "member-2",
-      name: "Marcus Rodriguez",
-      role: "CTO",
-      avatar: "",
+      name: "Bima Adnadnita",
+      role: "Frontend Developer",
+      avatar: "/foto-bima.jpeg",
     },
   ],
 }: TeamProps) => {
@@ -42,14 +42,24 @@ const TeamSection = ({
           {description}
         </p>
       </div>
-      <div className="w-full max-w-7xl mx-auto mt-16 flex gap-x-30 gap-y-16 items-center justify-center">
+      <div className="w-full max-w-7xl mx-auto mt-16 flex flex-wrap gap-x-10 gap-y-16 items-start justify-center">
         {members.map((member) => (
-          <div key={member.id} className="flex flex-col items-center">
-            <div className="mb-4 size-20 border rounded-full md:mb-5 lg:size-40">
-              <Image src={member.avatar} alt="avatar" width={20} height={20} />
-              <p className="text-muted-foreground text-center">{member.name}</p>
+          <div
+            key={member.id}
+            className="flex flex-col items-center w-[150px] lg:w-[200px]"
+          >
+            <div className="relative mb-4 size-20 lg:size-40 border rounded-full overflow-hidden bg-muted md:mb-5">
+              <Image
+                src={member.avatar} // Kasih fallback kalau avatar kosong
+                alt={member.name}
+                fill // Mengisi penuh wadah induknya (si div relative di atas)
+                className="object-cover" // Memastikan gambar tidak gepeng, tercrop rapi
+                sizes="(max-width: 1024px) 80px, 160px" // Optimalisasi loading gambar Next.js
+              />
             </div>
-            <p className="text-center font-medium">{member.name}</p>
+
+            {/* --- TEKS (Di luar lingkaran) --- */}
+            <p className="text-center font-medium text-lg">{member.name}</p>
             <p className="text-muted-foreground text-center">{member.role}</p>
           </div>
         ))}
