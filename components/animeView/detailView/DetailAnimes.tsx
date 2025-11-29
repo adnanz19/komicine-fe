@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Image from "next/image";
@@ -21,6 +21,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AnimeDetail, DetailAnimesProps } from "@/types/anime";
+import { useRouter } from "next/navigation";
+
+// --- IMPORT FIREBASE ---
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 const fetchAnimeDetail = async (id: string): Promise<AnimeDetail> => {
   const apiUrl = process.env.NEXT_PUBLIC_JIKAN_API_URL;
@@ -29,6 +35,12 @@ const fetchAnimeDetail = async (id: string): Promise<AnimeDetail> => {
 };
 
 const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
+  const router = useRouter();
+
+  // --- STATE FIREBASE ---
+  const [user, setUser] = useState<User | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+
   const {
     data: anime,
     isLoading,
@@ -39,9 +51,68 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
     enabled: !!animeId,
   });
 
+  // 1. Cek User Login
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Cek Status Favorite di Database (Realtime)
+  useEffect(() => {
+    if (!user || !animeId) {
+      setIsFavorite(false);
+      return;
+    }
+
+    // Path: users/{uid}/favorites/{animeId}
+    const docRef = doc(db, "users", user.uid, "favorites", animeId.toString());
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      setIsFavorite(docSnap.exists());
+    });
+
+    return () => unsubscribe();
+  }, [user, animeId]);
+
+  // 3. Fungsi Toggle Favorite
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!anime) return;
+
+    const docRef = doc(db, "users", user.uid, "favorites", animeId.toString());
+
+    try {
+      if (isFavorite) {
+        // Hapus
+        await deleteDoc(docRef);
+      } else {
+        // Simpan (Dengan tipe "Anime")
+        await setDoc(docRef, {
+          mal_id: anime.mal_id,
+          title: anime.title,
+          image_url: anime.images.jpg.image_url,
+          score: anime.score || 0,
+          status: anime.status,
+
+          type: "Anime", // PENTING UNTUK FILTER
+          episodes: anime.episodes, // Simpan Episode
+
+          added_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Gagal update favorite anime:", err);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
             <div className="flex flex-col lg:flex-row gap-8">
@@ -64,7 +135,7 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
 
   if (error || !anime) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 p-6 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">
             Anime tidak ditemukan
@@ -83,7 +154,7 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
@@ -118,14 +189,26 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
                   />
                 </div>
                 <div className="p-4 space-y-3">
-                  <Button className="w-full bg-red-600 hover:bg-red-700">
-                    <Heart className="w-4 h-4 mr-2" />
-                    Tambah ke Favorit
+                  {/* --- TOMBOL FAVORITE DINAMIS --- */}
+                  <Button
+                    onClick={handleToggleFavorite}
+                    className={`w-full cursor-pointer transition-all duration-300 ${
+                      isFavorite
+                        ? "bg-slate-700 hover:bg-slate-600 text-white" // Style Favorit (Abu)
+                        : "bg-red-600 hover:bg-red-700 text-white" // Style Belum Favorit (Merah)
+                    }`}
+                  >
+                    <Heart
+                      className={`w-4 h-4 mr-2 ${
+                        isFavorite ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    {isFavorite ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                   </Button>
 
                   {/* Watch Trailer Button */}
                   {anime.trailer?.embed_url && (
-                    <Button 
+                    <Button
                       className="w-full bg-blue-600 hover:bg-blue-700"
                       asChild
                     >
@@ -171,11 +254,12 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
                 {/* Alternative Titles */}
                 {(anime.title_english || anime.title_japanese) && (
                   <div className="mb-4 space-y-1">
-                    {anime.title_english && anime.title_english !== anime.title && (
-                      <p className="text-gray-300">
-                        English: {anime.title_english}
-                      </p>
-                    )}
+                    {anime.title_english &&
+                      anime.title_english !== anime.title && (
+                        <p className="text-gray-300">
+                          English: {anime.title_english}
+                        </p>
+                      )}
                     {anime.title_japanese && (
                       <p className="text-gray-300">
                         Japanese: {anime.title_japanese}
@@ -256,7 +340,8 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
                   )}
                   {anime.scored_by && (
                     <p>
-                      <strong>Scored by:</strong> {anime.scored_by.toLocaleString()} users
+                      <strong>Scored by:</strong>{" "}
+                      {anime.scored_by.toLocaleString()} users
                     </p>
                   )}
                 </div>
@@ -329,7 +414,7 @@ const DetailAnimes = ({ animeId }: DetailAnimesProps) => {
                     >
                       <Button
                         variant="outline"
-                        className="w-full border-slate-600 text-slate-300 hover:bg-white hover:text-slate-900 hover:border-white transition-colors duration-300"
+                        className="w-full border-slate-600 text-slate-300 hover:bg-white hover:text-slate-900 hover:border-white transition-colors duration-300 cursor-pointer"
                       >
                         <span>View on MyAnimeList</span>
                         <ExternalLink className="w-4 h-4 ml-2" />
