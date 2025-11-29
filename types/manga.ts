@@ -1,4 +1,3 @@
-
 export interface MangaImage {
   jpg: {
     image_url: string;
@@ -42,6 +41,7 @@ export interface MangaData {
   status: string;
   score: number;
   members: number;
+  genres?: MangaGenre[]; // Optional karena tidak semua response API include genres
 }
 
 // Interface untuk Detail Manga (DetailMangas component)
@@ -71,9 +71,24 @@ export interface MangaDetail {
   demographics: MangaDemographic[];
 }
 
+export interface MangaApiResponse {
+  data: MangaData[];
+  pagination: {
+    last_visible_page: number;
+    has_next_page: boolean;
+    current_page: number;
+    items: {
+      count: number;
+      total: number;
+      per_page: number;
+    };
+  };
+}
+
 // Props interfaces
 export interface ListMangasProps {
   searchQuery: string;
+  safeMode?: boolean;
 }
 
 export interface DetailMangasProps {
@@ -82,6 +97,15 @@ export interface DetailMangasProps {
 
 export interface HeroMangasProps {
   onSearch?: (keyword: string) => void;
+}
+
+export interface SafeModeState {
+  enabled: boolean;
+}
+
+export interface FilterSettings {
+  safeMode: boolean;
+  hiddenGenres: string[];
 }
 
 // Category interface untuk Hero component
