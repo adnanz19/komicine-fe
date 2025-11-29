@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import axios from "axios";
@@ -20,6 +20,11 @@ import Link from "next/link";
 import { AnimeApiResponse, ListAnimesProps } from "@/types/anime";
 import AnimePagination from "./AnimePagination";
 
+// --- IMPORT FIREBASE ---
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, deleteDoc, onSnapshot, collection } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+
 const fetchAnimes = async (
   query: string,
   genreId?: string,
@@ -30,13 +35,10 @@ const fetchAnimes = async (
   let endpoint = `${apiUrl}/anime?limit=15&page=${page}`;
 
   if (genreId) {
-    // Search by genre ID
     endpoint += `&genres=${genreId}&order_by=popularity`;
   } else if (query) {
-    // Search by text query
     endpoint += `&q=${query}`;
   } else {
-    // Default popular anime
     endpoint += `&order_by=popularity`;
   }
 
@@ -45,7 +47,10 @@ const fetchAnimes = async (
 };
 
 const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
+  // --- STATE FIREBASE ---
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [user, setUser] = useState<User | null>(null); // Cek user login
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,10 +63,8 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
   }, [searchQuery, genreId]);
 
   const effectiveCurrentPage = useMemo(() => {
-    // If it's a new search, always start from page 1
     const isNewSearch = searchKey !== `${searchQuery}-${genreId || "none"}`;
     if (isNewSearch && currentPage > 1) {
-      // Reset URL to page 1 when search changes
       const params = new URLSearchParams(searchParams.toString());
       params.delete("page");
       const newUrl = params.toString()
@@ -109,7 +112,6 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
       return allAnimes;
     }
 
-    // Jika safe mode aktif (true), filter out anime dengan genre Hentai
     const filtered = allAnimes.filter((anime) => {
       if (anime.genres && Array.isArray(anime.genres)) {
         const hasAdultContent = anime.genres.some(
@@ -131,16 +133,65 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
     );
     return filtered;
   }, [allAnimes, safeMode]);
-  const toggleFavorite = (animeId: number) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(animeId)) {
-        newFavorites.delete(animeId);
-      } else {
-        newFavorites.add(animeId);
-      }
-      return newFavorites;
+
+  // --- LOGIKA FIREBASE 1: Cek User Login ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
+    return () => unsubscribe();
+  }, []);
+
+  // --- LOGIKA FIREBASE 2: Sync Favorites Realtime ---
+  useEffect(() => {
+    if (!user) {
+      setFavorites(new Set());
+      return;
+    }
+
+    const favRef = collection(db, "users", user.uid, "favorites");
+    const unsubscribe = onSnapshot(favRef, (snapshot) => {
+      const favIds = new Set(snapshot.docs.map((doc) => parseInt(doc.id)));
+      setFavorites(favIds);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // --- LOGIKA FIREBASE 3: Toggle Function ---
+  const toggleFavorite = async (anime: any) => {
+    // Terima Full Object
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const animeIdString = anime.mal_id.toString();
+    const docRef = doc(db, "users", user.uid, "favorites", animeIdString);
+
+    try {
+      if (favorites.has(anime.mal_id)) {
+        // Hapus
+        await deleteDoc(docRef);
+      } else {
+        // Simpan
+        await setDoc(docRef, {
+          mal_id: anime.mal_id,
+          title: anime.title,
+          image_url: anime.images.jpg.image_url,
+          score: anime.score || 0,
+          status: anime.status,
+
+          // --- KHUSUS ANIME ---
+          type: "Anime", // Penting untuk filter!
+          episodes: anime.episodes, // Simpan episode, bukan chapter
+
+          added_at: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Gagal update favorite anime:", err);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -154,7 +205,6 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
     }
   };
 
-  // Get current search type for display
   const getSearchTitle = () => {
     if (genreId) {
       const genreMap: { [key: string]: string } = {
@@ -240,7 +290,6 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
           {getSearchTitle()}
         </h2>
 
-
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
           {safeMode ? (
             <p className="text-green-400 flex items-center gap-1">
@@ -282,7 +331,8 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
               </div>
 
               <button
-                onClick={() => toggleFavorite(anime.mal_id)}
+                // UPDATE: Passing full object
+                onClick={() => toggleFavorite(anime)}
                 className="absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none bg-black/20 hover:bg-black/40 backdrop-blur-sm"
               >
                 <Heart
@@ -325,7 +375,9 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
                           : "text-slate-500"
                       }`}
                     >
-                      {anime.status === "Publishing" ? "Ongoing" : anime.status}
+                      {anime.status === "Publishing"
+                        ? "Ongoing"
+                        : anime.status}
                     </span>
                   </div>
                 </div>
