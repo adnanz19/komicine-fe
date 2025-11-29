@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import axios from "axios";
 import { Card } from "../../ui/card";
-import MangaPagination from "./MangaPagination";
 import {
   Heart,
   BookOpen,
@@ -18,16 +17,17 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ListMangasProps, MangaApiResponse } from "@/types/manga";
+import { AnimeApiResponse, ListAnimesProps } from "@/types/anime";
+import AnimePagination from "./AnimePagination";
 
-const fetchMangas = async (
+const fetchAnimes = async (
   query: string,
   genreId?: string,
   page: number = 1
-): Promise<MangaApiResponse> => {
+): Promise<AnimeApiResponse> => {
   const apiUrl = process.env.NEXT_PUBLIC_JIKAN_API_URL;
 
-  let endpoint = `${apiUrl}/manga?limit=15&page=${page}`;
+  let endpoint = `${apiUrl}/anime?limit=15&page=${page}`;
 
   if (genreId) {
     // Search by genre ID
@@ -36,7 +36,7 @@ const fetchMangas = async (
     // Search by text query
     endpoint += `&q=${query}`;
   } else {
-    // Default popular manga
+    // Default popular anime
     endpoint += `&order_by=popularity`;
   }
 
@@ -44,7 +44,7 @@ const fetchMangas = async (
   return response.data;
 };
 
-const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
+const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -87,32 +87,32 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["mangas", searchKey, safeMode, effectiveCurrentPage],
+    queryKey: ["animes", searchKey, safeMode, effectiveCurrentPage],
     queryFn: () =>
-      fetchMangas(searchQuery, genreId || undefined, effectiveCurrentPage),
+      fetchAnimes(searchQuery, genreId || undefined, effectiveCurrentPage),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     enabled: true,
   });
 
-  const allMangas = useMemo(() => {
+  const allAnimes = useMemo(() => {
     return apiResponse?.data || [];
   }, [apiResponse?.data]);
   const pagination = apiResponse?.pagination;
 
-  // Filter manga berdasarkan safe mode
-  const mangas = useMemo(() => {
-    if (!allMangas) return [];
+  // Filter anime berdasarkan safe mode
+  const animes = useMemo(() => {
+    if (!allAnimes) return [];
 
     if (!safeMode) {
-      console.log("Safe mode OFF, showing all mangas");
-      return allMangas;
+      console.log("Safe mode OFF, showing all animes");
+      return allAnimes;
     }
 
-    // Jika safe mode aktif (true), filter out manga dengan genre Hentai
-    const filtered = allMangas.filter((manga) => {
-      if (manga.genres && Array.isArray(manga.genres)) {
-        const hasAdultContent = manga.genres.some(
+    // Jika safe mode aktif (true), filter out anime dengan genre Hentai
+    const filtered = allAnimes.filter((anime) => {
+      if (anime.genres && Array.isArray(anime.genres)) {
+        const hasAdultContent = anime.genres.some(
           (genre) =>
             genre.name &&
             (genre.name.toLowerCase().includes("hentai") ||
@@ -125,20 +125,19 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     });
 
     console.log(
-      `Filtered result: ${filtered.length} mangas (removed ${
-        allMangas.length - filtered.length
+      `Filtered result: ${filtered.length} animes (removed ${
+        allAnimes.length - filtered.length
       })`
     );
     return filtered;
-  }, [allMangas, safeMode]);
-
-  const toggleFavorite = (mangaId: number) => {
+  }, [allAnimes, safeMode]);
+  const toggleFavorite = (animeId: number) => {
     setFavorites((prev) => {
       const newFavorites = new Set(prev);
-      if (newFavorites.has(mangaId)) {
-        newFavorites.delete(mangaId);
+      if (newFavorites.has(animeId)) {
+        newFavorites.delete(animeId);
       } else {
-        newFavorites.add(mangaId);
+        newFavorites.add(animeId);
       }
       return newFavorites;
     });
@@ -169,7 +168,7 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     if (searchQuery) {
       return `Hasil Pencarian untuk "${searchQuery}"`;
     }
-    return "Daftar Manga Populer";
+    return "Daftar Anime Populer";
   };
 
   const handlePageChange = (page: number) => {
@@ -196,7 +195,7 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return (
       <div className="p-6 md:p-10 my-10 max-w-7xl mx-auto relative z-10">
         <h2 className="text-3xl font-bold mb-8 text-center text-white">
-          Memuat Manga...
+          Memuat anime...
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {Array(20)
@@ -222,7 +221,7 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return (
       <div className="p-6 md:p-10 my-10 max-w-7xl mx-auto text-center">
         <p className="text-red-500 text-lg mb-4">
-          Error loading manga data. Please try again later.
+          Error loading anime data. Please try again later.
         </p>
         <button
           onClick={() => refetch()}
@@ -258,18 +257,18 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {mangas?.map((manga) => (
+        {animes?.map((anime) => (
           <Card
-            key={manga.mal_id}
+            key={anime.mal_id}
             className="group relative flex flex-col bg-slate-900 rounded-xl border border-slate-800 shadow-md hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1 hover:border-slate-600 transition-all duration-300 overflow-hidden p-0"
           >
             <div className="relative w-full aspect-2/3 overflow-hidden bg-slate-800">
-              <Link href={`/mangas/detail/${manga.mal_id}`}>
+              <Link href={`/animes/detail/${anime.mal_id}`}>
                 <Image
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
-                  src={manga.images.jpg.image_url}
-                  alt={manga.title}
+                  src={anime.images.jpg.image_url}
+                  alt={anime.title}
                   className="object-cover transition-transform duration-500 group-hover:scale-110 opacity-90 group-hover:opacity-90 cursor-pointer"
                   loading="lazy"
                 />
@@ -278,17 +277,17 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
               <div className="absolute top-0 inset-x-0 h-24 bg-linear-to-b from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2">
                 <div className="flex items-center gap-1 text-white text-xs">
                   <Users className="w-4 h-4" />
-                  <span>{manga.members?.toLocaleString()}</span>
+                  <span>{anime.members?.toLocaleString()}</span>
                 </div>
               </div>
 
               <button
-                onClick={() => toggleFavorite(manga.mal_id)}
+                onClick={() => toggleFavorite(anime.mal_id)}
                 className="absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none bg-black/20 hover:bg-black/40 backdrop-blur-sm"
               >
                 <Heart
                   className={`w-5 h-5 transition-colors cursor-pointer ${
-                    favorites.has(manga.mal_id)
+                    favorites.has(anime.mal_id)
                       ? "fill-red-500 text-red-500"
                       : "text-slate-300 hover:text-red-400"
                   }`}
@@ -297,12 +296,12 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
             </div>
 
             <div className="flex flex-col grow p-4 space-y-3">
-              <Link href={`/mangas/detail/${manga.mal_id}`}>
+              <Link href={`/animes/detail/${anime.mal_id}`}>
                 <h3
                   className="font-bold text-base md:text-lg line-clamp-2 leading-tight text-slate-100 group-hover:text-blue-400 transition-colors"
-                  title={manga.title}
+                  title={anime.title}
                 >
-                  {manga.title}
+                  {anime.title}
                 </h3>
               </Link>
 
@@ -311,30 +310,30 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
                   <div className="flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5" />
                     <span className="text-xs md:text-sm">
-                      {manga.chapters ? `${manga.chapters} Ch.` : "?"}
+                      {anime.episodes ? `${anime.episodes} Ep.` : "?"}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    {getStatusIcon(manga.status)}
+                    {getStatusIcon(anime.status)}
                     <span
                       className={`text-xs md:text-sm capitalize ${
-                        manga.status.toLowerCase() === "finished"
+                        anime.status.toLowerCase() === "finished"
                           ? "text-emerald-400"
-                          : manga.status.toLowerCase() === "publishing"
+                          : anime.status.toLowerCase() === "publishing"
                           ? "text-blue-400"
                           : "text-slate-500"
                       }`}
                     >
-                      {manga.status === "Publishing" ? "Ongoing" : manga.status}
+                      {anime.status === "Publishing" ? "Ongoing" : anime.status}
                     </span>
                   </div>
                 </div>
 
-                {manga.score && (
+                {anime.score && (
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-slate-800 w-fit px-2 py-1 rounded-md self-start border border-slate-700">
                     <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                    <span>{manga.score.toFixed(1)}</span>
+                    <span>{anime.score.toFixed(1)}</span>
                   </div>
                 )}
               </div>
@@ -345,19 +344,19 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
 
       {/* Pagination */}
       {pagination && (
-        <MangaPagination
+        <AnimePagination
           pagination={pagination}
           currentPage={effectiveCurrentPage}
           onPageChange={handlePageChange}
         />
       )}
 
-      {mangas?.length === 0 && !isLoading && (
+      {animes?.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <p className="text-gray-400 text-lg mb-4">
-            Tidak ada manga yang ditemukan
+            Tidak ada anime yang ditemukan
           </p>
-          {safeMode && allMangas && allMangas.length > 0 && (
+          {safeMode && allAnimes && allAnimes.length > 0 && (
             <p className="text-sm text-green-400">
               Coba matikan Safe Mode untuk melihat lebih banyak konten
             </p>
@@ -368,4 +367,4 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
   );
 };
 
-export default ListMangas;
+export default ListAnimes;

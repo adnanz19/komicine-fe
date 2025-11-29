@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useRef } from "react";
-import { HeroMangasProps } from "@/types/manga";
 import { useSafeMode } from "@/hooks/useSafeMode";
+import { HeroAnimesProps } from "@/types/anime";
 
-const HeroMangas = ({ onSearch }: HeroMangasProps) => {
+const HeroAnimes = ({ onSearch }: HeroAnimesProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,9 +29,9 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
     if (keyword) {
       const params = new URLSearchParams();
       params.set("q", keyword);
-      router.push(`/mangas?${params.toString()}`);
+      router.push(`/animes?${params.toString()}`);
     } else {
-      router.push("/mangas");
+      router.push("/animes");
     }
 
     onSearch?.(keyword || "");
@@ -44,7 +44,7 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
 
     const params = new URLSearchParams();
     params.set("genre", genreId.toString());
-    router.push(`/mangas?${params.toString()}`);
+    router.push(`/animes?${params.toString()}`);
 
     onSearch?.(""); // Clear text search
   };
@@ -74,20 +74,21 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
           </span>
-          Website Baca Manga #1 Indonesia
+          Website Nonton Anime #1 Indonesia
         </div>
 
         {/* Heading Utama */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 text-foreground leading-tight">
-          Temukan & Baca <br />
+            Temukan & Nonton
+             <br />
           <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
-            Manga Favoritmu
+            Anime Favoritmu
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-base md:text-lg text-muted-foreground mb-10 max-w-2xl leading-relaxed">
-          Platform baca manga terlengkap dengan update tercepat. Nikmati ribuan
+          Platform nonton anime terlengkap dengan update tercepat. Nikmati ribuan
           koleksi dari berbagai genre secara gratis dan tanpa iklan yang
           mengganggu.
         </p>
@@ -101,7 +102,7 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
               type="text"
               ref={inputRef}
               onKeyDown={handleKeyDown}
-              placeholder="Cari judul manga (cth: Naruto, One Piece)..."
+              placeholder="Cari judul anime (cth: Naruto, One Piece)..."
               className="w-full py-4 pl-12 pr-14 rounded-full bg-card/90 border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 shadow-xl backdrop-blur-xl transition-all"
               defaultValue={searchParams.get("q") || ""}
             />
@@ -124,7 +125,7 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
         <div className="mb-8 flex items-center justify-center gap-3">
           <button
             onClick={toggleSafeMode}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 cursor-pointer ${
+            className={` cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 ${
               safeMode
                 ? "bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/30"
                 : "bg-red-600/20 border-red-500/30 text-red-400 hover:bg-red-600/30"
@@ -153,7 +154,7 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
             <button
               key={cat.name}
               onClick={() => handleCategorySearch(cat.name, cat.genreId)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border transition-all duration-300 text-xs md:text-sm backdrop-blur-sm cursor-pointer ${
+              className={` cursor-pointer flex items-center gap-1.5 px-4 py-1.5 rounded-full border transition-all duration-300 text-xs md:text-sm backdrop-blur-sm ${
                 currentGenre === cat.genreId.toString()
                   ? "bg-purple-600 border-purple-500 text-white"
                   : "border-border bg-card/50 text-muted-foreground hover:text-foreground hover:bg-purple-600 hover:border-purple-500"
@@ -169,4 +170,4 @@ const HeroMangas = ({ onSearch }: HeroMangasProps) => {
   );
 };
 
-export default HeroMangas;
+export default HeroAnimes;
