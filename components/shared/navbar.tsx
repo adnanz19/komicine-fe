@@ -31,6 +31,9 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
+import { Menu } from "lucide-react";
+import { Separator } from "../ui/separator";
+
 export const Navbar = () => {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -48,71 +51,103 @@ export const Navbar = () => {
     await signOut(auth);
     router.push("/");
   };
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/mangas", label: "Manga" },
+    { href: "/animes", label: "Anime" },
+    { href: "/movies", label: "Movies" },
+    { href: "/favorites", label: "Favorite" },
+  ];
+
   return (
-    <nav className="px-10 z-100 sticky top-0 bg-background py-3 flex flex-row border-b justify-between">
-      <Image src="/KomiCine.svg" alt="" width={100} height={100} />
-      <NavigationMenu>
+    <nav className="px-4 md:px-10 z-50 sticky top-0 bg-background py-3 flex flex-row border-b justify-between items-center">
+      <Link href="/">
+        <Image src="/KomiCine.svg" alt="KomiCine Logo" width={100} height={100} />
+      </Link>
+
+      {/* Desktop Navigation */}
+      <NavigationMenu className="hidden md:block">
         <NavigationMenuList className="flex-wrap">
-          {/* All List */}
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/" ? "text-primary" : ""
-              }`}
-            >
-              <Link href="/">Home</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-
-          {/* Manga */}
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/mangas" ? "text-primary" : ""
-              }`}
-            >
-              <Link href="/mangas">Manga</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          {/* Anime */}
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/animes" ? "text-primary" : ""
-              }`}
-            >
-              <Link href="/animes">Anime</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          {/* Movies */}
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/movies" ? "text-primary" : ""
-              }`}
-            >
-              <Link href="/movies">Movies</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={`${navigationMenuTriggerStyle()} ${
-                pathname === "/favorites" ? "text-primary" : ""
-              }`}
-            >
-              <Link href="/favorites">Favorite</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
+          {navLinks.map((link) => (
+            <NavigationMenuItem key={link.href}>
+              <NavigationMenuLink
+                asChild
+                className={`${navigationMenuTriggerStyle()} ${
+                  pathname === link.href ? "text-primary" : ""
+                }`}
+              >
+                <Link href={link.href}>{link.label}</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          ))}
         </NavigationMenuList>
       </NavigationMenu>
-      <NavigationMenu>
-        <NavigationMenuList className="gap-2">
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden flex items-center gap-2">
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={buttonVariants({ variant: "outline", size: "icon" })}
+              style={{ cursor: "pointer" }}
+            >
+              <UserIcon className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                {user.displayName || user.email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer focus:bg-primary/50 hover:bg-primary/50"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={buttonVariants({ variant: "outline", size: "icon" })}
+                style={{ cursor: "pointer" }}
+              >
+                <Menu className="h-6 w-6" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Navigation</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {navLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link
+                      href={link.href}
+                      className={`${
+                        pathname === link.href ? "text-primary" : ""
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Login</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/register">Register</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Auth Buttons/Dropdown */}
+      <NavigationMenu className="hidden md:block">
+        <NavigationMenuList className="gap-2 items-center">
           {user ? (
             <NavigationMenuItem>
               <DropdownMenu>
@@ -120,7 +155,7 @@ export const Navbar = () => {
                   className={buttonVariants({ variant: "outline" } )}
                   style={{ cursor: "pointer" }}
                 >
-                  <UserIcon className="mr-2 h-4 w-4" />
+                  <UserIcon className="mr-2 h-4 w-4" /> {/* Icon for desktop */}
                   {user.displayName || user.email}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
