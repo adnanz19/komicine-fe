@@ -73,7 +73,7 @@ export const Navbar = () => {
                 pathname === "/manga" ? "text-primary" : ""
               }`}
             >
-              <Link href="/manga">Manga</Link>
+              <Link href="/mangas">Manga</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
           {/* Anime */}
