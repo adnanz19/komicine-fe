@@ -9,13 +9,13 @@ import { BackgroundBeamsWithCollision } from "@/components/ui/shadcn-io/backgrou
 export default function Home() {
   return (
     <BackgroundBeamsWithCollision className="relative pb-20 px-6 md:px-10 overflow-hidden bg-background">
-      <main className="min-h-screen bg-background z-20">
+      <main className="min-h-screen z-20">
         <HeroSection/>
         <FeatureSection/>
         <TeamSection/>
         <FaqSection/>
       </main>
-      <footer className="bg-background z-20">
+      <footer className="z-20">
         <FooterSection/>
       </footer>
     </BackgroundBeamsWithCollision>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Image from "next/image";
@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { MangaDetail, DetailMangasProps } from "@/types/manga";
+import { useRouter } from "next/navigation";
+
+// --- IMPORT FIREBASE ---
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 const fetchMangaDetail = async (id: string): Promise<MangaDetail> => {
   const apiUrl = process.env.NEXT_PUBLIC_JIKAN_API_URL;
@@ -27,6 +33,13 @@ const fetchMangaDetail = async (id: string): Promise<MangaDetail> => {
 };
 
 const DetailMangas = ({ mangaId }: DetailMangasProps) => {
+  const router = useRouter();
+  
+  // --- STATE FIREBASE ---
+  const [user, setUser] = useState<User | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const {
     data: manga,
     isLoading,
@@ -36,6 +49,64 @@ const DetailMangas = ({ mangaId }: DetailMangasProps) => {
     queryFn: () => fetchMangaDetail(mangaId),
     enabled: !!mangaId,
   });
+
+  // 1. Cek User Login
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Cek Status Favorite di Database (Realtime)
+  useEffect(() => {
+    if (!user || !mangaId) {
+        setIsFavorite(false);
+        return;
+    }
+
+    // Cek dokumen di path: users/{uid}/favorites/{mangaId}
+    const docRef = doc(db, "users", user.uid, "favorites", mangaId.toString());
+
+    // onSnapshot mendengarkan perubahan realtime
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        setIsFavorite(docSnap.exists());
+    });
+
+    return () => unsubscribe();
+  }, [user, mangaId]);
+
+  // 3. Fungsi Toggle Favorite
+  const handleToggleFavorite = async () => {
+    if (!user) {
+        router.push("/login");
+        return;
+    }
+    if (!manga) return;
+
+    const docRef = doc(db, "users", user.uid, "favorites", mangaId.toString());
+
+    try {
+        if (isFavorite) {
+            // Hapus dari favorit
+            await deleteDoc(docRef);
+        } else {
+            // Tambah ke favorit (Simpan data penting saja)
+            await setDoc(docRef, {
+                mal_id: manga.mal_id,
+                title: manga.title,
+                image_url: manga.images.jpg.image_url,
+                score: manga.score || 0,
+                status: manga.status,
+                chapters: manga.chapters,
+                added_at: new Date().toISOString()
+            });
+        }
+    } catch (err) {
+        console.error("Gagal update favorite:", err);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -116,9 +187,18 @@ const DetailMangas = ({ mangaId }: DetailMangasProps) => {
                   />
                 </div>
                 <div className="p-4 space-y-3">
-                  <Button className="w-full bg-red-600 hover:bg-red-700 cursor-pointer ">
-                    <Heart className="w-4 h-4 mr-2 " />
-                    Tambah ke Favorit
+                  
+                  {/* --- TOMBOL FAVORITE DINAMIS --- */}
+                  <Button 
+                    onClick={handleToggleFavorite}
+                    className={`w-full cursor-pointer transition-all duration-300 ${
+                        isFavorite 
+                        ? "bg-slate-700 hover:bg-slate-600 text-white" // Style kalau sudah Favorit
+                        : "bg-red-600 hover:bg-red-700 text-white" // Style kalau belum
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 mr-2 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+                    {isFavorite ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                   </Button>
 
                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">

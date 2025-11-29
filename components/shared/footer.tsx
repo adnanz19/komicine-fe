@@ -77,7 +77,7 @@ const FooterSection = ({
   ],
 }: FooterProps) => {
   return (
-    <section className="pt-20 pb-10 px-10 bg-background border-t"> {/* Tambah border-t biar rapi */}
+    <section className="pt-20 pb-10 px-10 border-t"> {/* Tambah border-t biar rapi */}
       <div className="w-full max-w-7xl mx-auto">
         <footer>
           <div className="grid grid-cols-2 gap-8 lg:grid-cols-6">
