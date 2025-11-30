@@ -3,7 +3,7 @@
 
 ![Komicine Logo](public/KomiCine.svg)
 
-**Platform streaming manga, anime, dan movie terlengkap di Indonesia**
+**Platform Daftar List dan Info manga, anime, serta movie terlengkap di Indonesia**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
