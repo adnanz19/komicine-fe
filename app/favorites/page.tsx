@@ -1,7 +1,13 @@
 import FavoritesView from '@/components/favoriteView/FavoritesView'
 import React from 'react'
 
-const AnimePage = () => {
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Daftar Favorit",
+};
+
+const FavoritesPage = () => {
   return (
     <div>
       <FavoritesView />
@@ -9,4 +15,4 @@ const AnimePage = () => {
   )
 }
 
-export default AnimePage
+export default FavoritesPage
