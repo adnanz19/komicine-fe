@@ -2,6 +2,7 @@ import { GalleryVerticalEnd, X } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -10,9 +11,9 @@ export default function LoginPage() {
         <Image
           src="/watch.jpg"
           alt="Image"
-          fill 
-          priority 
-          sizes="50vw" 
+          fill
+          priority
+          sizes="50vw"
           className="object-cover dark:brightness-[0.2] dark:grayscale"
         />
       </div>
@@ -29,7 +30,9 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="absolute right-6 top-6">
-        <X className="size-6 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+        <Link href="/">
+          <X className="size-6 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+        </Link>
       </div>
     </div>
   );

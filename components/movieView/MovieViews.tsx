@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import HeroMovies from "./pageView/HeroMovies";
 import ListMovies from "./pageView/ListMovies";
 import { BackgroundBeamsWithCollision } from "../ui/shadcn-io/background-beams-with-collision";
+import { Particles } from "../ui/shadcn-io/particles";
 
 const MovieViews: React.FC = () => {
   const router = useRouter();
@@ -51,16 +52,24 @@ const MovieViews: React.FC = () => {
   const currentKeyword = searchParams.get("q") || "";
 
   return (
-     <BackgroundBeamsWithCollision className="relative pb-20 px-6 md:px-10 overflow-hidden bg-background">
-
-    <div className="min-h-screen bg-background">
-      <HeroMovies onSearch={handleSearch} />
-      <ListMovies
-        searchKeyword={currentKeyword}
-        onPageChange={handlePageChange}
+    <div className="relative pb-20 px-6 md:px-10 overflow-hidden bg-background">
+      <div className="min-h-screen bg-background">
+        <HeroMovies onSearch={handleSearch} />
+        <ListMovies
+          searchKeyword={currentKeyword}
+          onPageChange={handlePageChange}
         />
+      </div>
+
+      <Particles
+        className="absolute inset-0"
+        quantity={100}
+        ease={80}
+        staticity={50}
+        color="#ffffff"
+        size={0.8}
+      />
     </div>
-        </BackgroundBeamsWithCollision>
   );
 };
 

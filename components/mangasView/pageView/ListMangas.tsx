@@ -20,7 +20,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ListMangasProps, MangaApiResponse } from "@/types/manga";
 
-// --- TAMBAHAN IMPORT FIREBASE ---
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -133,7 +132,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return filtered;
   }, [allMangas, safeMode]);
 
-  // --- LOGIKA BARU: CEK USER LOGIN ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -141,7 +139,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return () => unsubscribe();
   }, []);
 
-  // --- LOGIKA BARU: SYNC FAVORITE DARI FIREBASE ---
   useEffect(() => {
     if (!user) {
         setFavorites(new Set()); 
@@ -159,7 +156,6 @@ const ListMangas = ({ searchQuery, safeMode = true }: ListMangasProps) => {
     return () => unsubscribe();
   }, [user]);
 
-  // --- LOGIKA BARU: FUNGSI TOGGLE KE FIREBASE ---
   const toggleFavorite = async (manga: any) => { // Terima full object
     if (!user) {
         // Kalau belum login, lempar ke halaman login

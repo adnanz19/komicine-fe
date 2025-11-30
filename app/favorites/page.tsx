@@ -13,10 +13,10 @@ import {
   CheckCircle, 
   Clock, 
   Star,
-  LayoutGrid,   // Icon All
-  Book,         // Icon Manga
-  MonitorPlay,  // Icon Anime
-  Clapperboard  // Icon Movie
+  LayoutGrid,
+  Book,
+  MonitorPlay,
+  Clapperboard
 } from "lucide-react";
 
 export default function FavoritesPage() {
@@ -24,10 +24,8 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   
-  // State untuk Filter (Default: 'all')
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  // 1. Cek User Login
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -36,7 +34,6 @@ export default function FavoritesPage() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Ambil Data Realtime
   useEffect(() => {
     if (!user) return;
 
@@ -54,7 +51,6 @@ export default function FavoritesPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // 3. Fungsi Hapus Favorit
   const handleRemoveFavorite = async (mangaId: string) => {
     if (!user) return;
     const docRef = doc(db, "users", user.uid, "favorites", mangaId);
@@ -65,12 +61,9 @@ export default function FavoritesPage() {
     }
   };
 
-  // 4. Logika Filter Data
   const filteredFavorites = favorites.filter((item) => {
     if (activeFilter === "all") return true;
     
-    // Asumsi: Nanti kamu menyimpan field 'type' ("Manga", "Anime", "Movie") di Firebase
-    // Kalau data lama belum ada 'type', kita anggap Manga dulu (opsional)
     const itemType = item.type || "Manga"; 
     
     return itemType.toLowerCase() === activeFilter;
@@ -91,15 +84,12 @@ export default function FavoritesPage() {
     }
   };
 
-  // --- Opsi Kategori Filter ---
   const filterCategories = [
     { id: "all", name: "Semua", icon: <LayoutGrid className="w-3 h-3" /> },
     { id: "manga", name: "Manga", icon: <Book className="w-3 h-3" /> },
     { id: "anime", name: "Anime", icon: <MonitorPlay className="w-3 h-3" /> },
     { id: "movie", name: "Movie", icon: <Clapperboard className="w-3 h-3" /> },
   ];
-
-  // --- RENDER ---
 
   if (!user && !loading) {
     return (
@@ -113,7 +103,6 @@ export default function FavoritesPage() {
   return (
     <div className="p-6 md:p-10 my-10 max-w-7xl mx-auto min-h-screen">
       
-      {/* HEADER SECTION */}
       <div className="flex flex-col items-center text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4">
            My Favorites
@@ -122,7 +111,6 @@ export default function FavoritesPage() {
           Koleksi ({favorites.length}) item yang telah Anda simpan
         </p>
 
-        {/* --- FILTER BUTTONS (Layout sama seperti HeroMangas) --- */}
         <div className="flex flex-wrap justify-center items-center gap-3">
             {filterCategories.map((cat) => (
               <button
@@ -141,7 +129,6 @@ export default function FavoritesPage() {
         </div>
       </div>
       
-      {/* CONTENT SECTION */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {Array(10).fill(0).map((_, index) => (
@@ -186,7 +173,6 @@ export default function FavoritesPage() {
                   />
                 </Link>
 
-                {/* Badge Tipe Media (Manga/Anime) di pojok kiri atas */}
                 {item.type && (
                     <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
                         {item.type}
@@ -217,7 +203,6 @@ export default function FavoritesPage() {
                     <div className="flex items-center gap-1.5">
                       <BookOpen className="w-3.5 h-3.5" />
                       <span className="text-xs md:text-sm">
-                        {/* Tampilkan Chapters (Manga) atau Episodes (Anime) */}
                         {item.chapters 
                             ? `${item.chapters} Ch.` 
                             : item.episodes 

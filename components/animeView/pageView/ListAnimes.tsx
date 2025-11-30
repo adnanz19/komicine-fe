@@ -47,9 +47,8 @@ const fetchAnimes = async (
 };
 
 const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
-  // --- STATE FIREBASE ---
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
-  const [user, setUser] = useState<User | null>(null); // Cek user login
+  const [user, setUser] = useState<User | null>(null); 
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -134,7 +133,6 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
     return filtered;
   }, [allAnimes, safeMode]);
 
-  // --- LOGIKA FIREBASE 1: Cek User Login ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -142,7 +140,6 @@ const ListAnimes = ({ searchQuery, safeMode = true }: ListAnimesProps) => {
     return () => unsubscribe();
   }, []);
 
-  // --- LOGIKA FIREBASE 2: Sync Favorites Realtime ---
   useEffect(() => {
     if (!user) {
       setFavorites(new Set());

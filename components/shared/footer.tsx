@@ -37,34 +37,31 @@ const FooterSection = ({
     {
       title: "Jelajahi",
       links: [
-        { text: "Anime Musim Ini", url: "/anime" },
-        { text: "Manga Populer", url: "/manga" },
-        { text: "Film Box Office", url: "/movie" },
-        { text: "Pencarian Lanjut", url: "/search" },
+        { text: "Anime Musim Ini", url: "/animes" },
+        { text: "Manga Populer", url: "/mangas" },
+        { text: "Film Box Office", url: "/movies" },
       ],
     },
     {
       title: "Akun",
       links: [
         { text: "Masuk / Daftar", url: "/login" },
-        { text: "Koleksi Saya", url: "/profile/library" },
+        { text: "Koleksi Saya", url: "/favorites" },
         { text: "Pengaturan", url: "/settings" },
-        { text: "Lupa Password", url: "/reset-password" },
       ],
     },
     {
       title: "Info & Bantuan",
       links: [
-        { text: "Tentang Kami", url: "/about" },
-        { text: "FAQ / Pertanyaan", url: "/faq" },
-        { text: "Status API", url: "/status" },
-        { text: "Kontak Developer", url: "/contact" },
+        { text: "Tentang Kami", url: "#" },
+        { text: "FAQ / Pertanyaan", url: "#" },
+        { text: "Kontak Developer", url: "#" },
       ],
     },
     {
       title: "Sosial Media",
       links: [
-        { text: "GitHub", url: "https://github.com/bimaadnandita" }, // Ganti user githubmu
+        { text: "GitHub", url: "#" }, // Ganti user githubmu
         { text: "Instagram", url: "#" },
         { text: "Discord Community", url: "#" },
       ],
