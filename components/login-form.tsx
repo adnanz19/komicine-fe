@@ -26,7 +26,7 @@ const loginSchema = z.object({
     .email({ message: "Format email tidak valid" }),
   password: z
     .string()
-    .min(1, { message: "Password wajib diisi" }), // Login tidak perlu validasi min 6 char, cukup wajib isi
+    .min(1, { message: "Password wajib diisi" }), 
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>

@@ -59,7 +59,7 @@ const HeroFavorites = ({
 
         {/* Search Bar Container (Style disamakan persis) */}
         <div className="w-full max-w-2xl relative mb-8 group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className="absolute -inset-1 bg-linear-to-r from-purple-600 to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
 
           <div className="relative flex items-center">
             <input
