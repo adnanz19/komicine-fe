@@ -1,18 +1,15 @@
-import FavoritesView from '@/components/favoriteView/FavoritesView'
-import React from 'react'
-
+import { Suspense } from "react";
+import FavoritesView from "@/components/favoriteView/FavoritesView"; // Sesuaikan path
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Daftar Favorit",
+  title: "Koleksi Favorit",
 };
 
-const FavoritesPage = () => {
+export default function FavoritesPage() {
   return (
-    <div>
+    <Suspense fallback={<div className="text-center p-10 text-white">Loading Favorites...</div>}>
       <FavoritesView />
-    </div>
-  )
+    </Suspense>
+  );
 }
-
-export default FavoritesPage
