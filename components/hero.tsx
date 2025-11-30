@@ -2,6 +2,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 interface HeroProps {
   badge?: string;
@@ -24,21 +25,22 @@ interface HeroProps {
 }
 
 const HeroSection = ({
-  badge = "✨ Your Website Builder",
-  heading = "Blocks Built With Shadcn & Tailwind",
-  description = "Finely crafted components built with React, Tailwind and Shadcn UI. Developers can copy and paste these blocks directly into their project.",
+  badge = "🎬 Teman Nonton & Baca Kamu",
+  heading = "Dunia Cerita Visual dalam Satu Genggaman",
+  description = "Dari anime musiman, manhwa aksi, sampai film box office. Simpan semua judul yang kamu suka dan catat sejauh mana kamu menikmatinya, tanpa ribet.",
   buttons = {
     primary: {
-      text: "Discover all components",
-      url: "https://www.shadcnblocks.com",
+      text: "Buat Akun Gratis",
+      url: "/register",
     },
     secondary: {
-      text: "View on GitHub",
-      url: "https://www.shadcnblocks.com",
+      text: "Jelajahi Koleksi",
+      url: "/explore",
     },
+
   },
   image = {
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/placeholder-1.svg",
+    src: "/img-landing.svg",
     alt: "Hero section demo image showing interface components",
   },
 }: HeroProps) => {
@@ -50,10 +52,9 @@ const HeroSection = ({
             {badge && (
               <Badge variant="outline">
                 {badge}
-                <ArrowUpRight className="ml-2 size-4" />
               </Badge>
             )}
-            <h1 className="my-6 text-pretty text-4xl font-bold lg:text-6xl">
+            <h1 className="py-6 text-pretty text-4xl font-bold lg:text-6xl text-transparent bg-clip-text bg-linear-to-r from-purple-400 to-blue-400">
               {heading}
             </h1>
             <p className="text-muted-foreground mb-8 max-w-xl lg:text-xl">
@@ -75,11 +76,7 @@ const HeroSection = ({
               )}
             </div>
           </div>
-          <img
-            src={image.src}
-            alt={image.alt}
-            className="max-h-96 w-full rounded-md object-cover"
-          />
+          <Image src={image.src} alt={image.alt} width={500} height={500}/>
         </div>
       </div>
     </section>
